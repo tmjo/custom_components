@@ -101,6 +101,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
 
     def __init__(self, player):
         """Initialize."""
+        self.entity_id = None                   # group - keep this in case name changes from entity_id, otherwise lost?
         self._media_position_updated_at = None
         self._player = player
         self._signals = []
@@ -108,7 +109,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
         self._source_manager = None
         self._group_list = []                   # group
         self._group_name = None
-        #self._heos_device_name = None           # group
+        
 
     async def _player_update(self, player_id, event):
         """Handle player attribute updated."""
@@ -409,98 +410,48 @@ class HeosMediaPlayer(MediaPlayerDevice):
         return str(self._player.player_id)
 
     @property
+    def player_id(self) -> int:
+        """Return a player ID (int since PyHeos int)."""
+        return self._player.player_id
+
+    @property
     def volume_level(self) -> float:
         """Volume level of the media player (0..1)."""
         return self._player.volume / 100
 
+    async def entity_id_from_player_id(self, playerid):
+        for device in self.hass.data[DOMAIN].entities:
+            if playerid == device.unique_id:
+                return device.entity_id
+        return None
 
     async def get_groups(self):
         """Rebuild the list of entities in speaker group"""
         controller = self.hass.data[HEOS_DOMAIN][DATA_CONTROLLER_MANAGER].controller
-        
         if controller.connection_state != heos_const.STATE_CONNECTED:
             _LOGGER.error("Unable to rebuild group because HEOS is not connected")
             return None
 
         try:
             groups = await controller.get_groups(refresh=True)
+            grouplist = []
 
             for group in groups.values():
-                devices_in_group = group.name.split(" + ")
-                _LOGGER.info("HEOS Group info, groupname: %s", group.name)
-                _LOGGER.info("HEOS Group info, devices_in_group: %s", devices_in_group)
-                _LOGGER.info("HEOS Group info, self.name: %s", self.name)
-                if self.name in devices_in_group:
-                    grouplist = []
-                    grouplist.extend(["media_player." +group.leader.name.lower()])
-                    grouplist.extend(["media_player." +member.name.lower() for member in group.members])
-                    _LOGGER.info("HEOS Rebuilding group info, groupname: %s", group.name)
-                    _LOGGER.info("HEOS Rebuilding group info, grouplist: %s", grouplist)
+                if any(member.player_id == self.player_id for member in group.members) or group.leader.player_id == self.player_id:
+                    grouplist.append(await self.entity_id_from_player_id(str(group.leader.player_id)))
+                    for member in group.members:
+                        grouplist.append(await self.entity_id_from_player_id(str(member.player_id)))
                     self._group_name = group.name
-                    #self._group_list = grouplist
-                    return grouplist
-  
+                    _LOGGER.info("HEOS - player: " +str(self.name) +" is part of a group with name: " +str(group.name) +" where master: " +str(group.leader.name) +" and members are: " +str(group.members))
+
+                    _LOGGER.info("HEOS - grouplist: " +str(grouplist))
+                    return grouplist                        
+ 
             _LOGGER.info("HEOS Rebuilding group info, no groups found for this device: %s", self.name)
+            self._group_name = ""
             return None
 
         except HeosError as err:
             _LOGGER.error("HEOS Unable to get group info: %s", err)
-            return None
-
-    async def rebuild_heos_group(self, controller):
-        """Rebuild the list of entities in speaker group"""
-        if controller.connection_state != heos_const.STATE_CONNECTED:
-            _LOGGER.error("Unable to rebuild group because HEOS is not connected")
-            return None
-
-        if self._group_name is None:
-            return None
-
-        groups = await controller.get_groups(refresh=True)
-        
-        try:
-            for group in groups.values():
-                devices_in_group = group.name.split(" + ")
-                _LOGGER.info("Rebuilding group info, DEBUG groupname: %s", group.name)
-                _LOGGER.info("Rebuilding group info, DEBUG devices_in_group: %s", devices_in_group)
-                _LOGGER.info("Rebuilding group info, DEBUG self.name: %s", self.name)
-                if self.name in devices_in_group:
-                    grouplist = []
-                    grouplist.extend(["media_player." +group.leader.name.lower()])
-                    grouplist.extend(["media_player." +member.name.lower() for member in group.members])
-                    #for member in group.members:
-                    #    grouplist.append(member.name.lower())
-                    _LOGGER.info("Rebuilding group info, HEOS Groups are: %s", grouplist)
-                    return grouplist
-  
-            # for group in groups.values():
-            #     groupstring += "media_player." +group.leader.name.lower()
-            #     for alreadymember in group.members:
-            #         groupstring += ", media_player." +str(alreadymember.name.lower())
-            #     #groupstring = current_members.rstrip(',')            
-            #     grouplist.append(groupstring)
-            _LOGGER.info("Rebuilding group info, no groups found for this device: %s", self.name)
-            return None
-
-        except HeosError as err:
-            _LOGGER.error("Unable to get group info: %s", err)
-
-
-    async def get_group_name(self, controller):
-        """Get speaker group name"""
-        if controller.connection_state != heos_const.STATE_CONNECTED:
-            _LOGGER.error("Unable to get group name because HEOS is not connected")
-            return None
-
-        groups = await controller.get_groups(refresh=True)
-
-        try:
-            for group in groups.values():
-                devices_in_group = group.name.split(" + ")
-                if self.name in devices_in_group:
-                    return group.name
-            return None
-
-        except HeosError as err:
-            _LOGGER.error("Unable to get group name: %s", err)
+            self._group_name = ""
             return None
