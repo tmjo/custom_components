@@ -4,4 +4,4 @@ A few custom_components for Home Assistant - some are forks with modifications, 
 
 Dirty code to be expected, still learning :)
 
-Github test
+
