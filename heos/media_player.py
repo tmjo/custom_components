@@ -449,7 +449,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
  
             _LOGGER.info("HEOS Rebuilding group info, no groups found for this device: %s", self.name)
             self._group_name = ""
-            return None
+            return grouplist        #return empty grouplist if not grouped.
 
         except HeosError as err:
             _LOGGER.error("HEOS Unable to get group info: %s", err)
