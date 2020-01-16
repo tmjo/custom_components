@@ -1,9 +1,13 @@
 """Config flow to configure Heos."""
+from urllib.parse import urlparse
+
 from pyheos import Heos, HeosError
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_NAME
+#from homeassistant.const import CONF_HOST, CONF_NAME   #removed v0.104 see commit Include all SSDP data in discovery info (#28197)
+from homeassistant.components import ssdp               #added v0.104 see commit Include all SSDP data in discovery info (#28197)
+from homeassistant.const import CONF_HOST               #added v0.104 see commit Include all SSDP data in discovery info (#28197)
 
 from .const import DATA_DISCOVERED_HOSTS, DOMAIN
 
@@ -23,11 +27,15 @@ class HeosFlowHandler(config_entries.ConfigFlow):
     async def async_step_ssdp(self, discovery_info):
         """Handle a discovered Heos device."""
         # Store discovered host
+        hostname = urlparse(discovery_info[ssdp.ATTR_SSDP_LOCATION]).hostname   #added v0.104 see commit Include all SSDP data in discovery info (#28197)
         friendly_name = "{} ({})".format(
-            discovery_info[CONF_NAME], discovery_info[CONF_HOST]
+            
+            #discovery_info[CONF_NAME], discovery_info[CONF_HOST]       #removed v0.104 see commit Include all SSDP data in discovery info (#28197)
+            discovery_info[ssdp.ATTR_UPNP_FRIENDLY_NAME], hostname      #added v0.104 see commit Include all SSDP data in discovery info (#28197)
         )
         self.hass.data.setdefault(DATA_DISCOVERED_HOSTS, {})
-        self.hass.data[DATA_DISCOVERED_HOSTS][friendly_name] = discovery_info[CONF_HOST]
+        #self.hass.data[DATA_DISCOVERED_HOSTS][friendly_name] = discovery_info[CONF_HOST]   #removed v0.104 see commit Include all SSDP data in discovery info (#28197)
+        self.hass.data[DATA_DISCOVERED_HOSTS][friendly_name] = hostname                     #added v0.104 see commit Include all SSDP data in discovery info (#28197)
         # Abort if other flows in progress or an entry already exists
         if self._async_in_progress() or self._async_current_entries():
             return self.async_abort(reason="already_setup")

@@ -55,7 +55,7 @@ CONTROL_TO_SUPPORT = {
     heos_const.CONTROL_PLAY: SUPPORT_PLAY,
     heos_const.CONTROL_PAUSE: SUPPORT_PAUSE,
     heos_const.CONTROL_STOP: SUPPORT_STOP,
-    #heos_const.CONTROL_STOP: SUPPORT_TURN_OFF,
+#    heos_const.CONTROL_STOP: SUPPORT_TURN_OFF,
     heos_const.CONTROL_PLAY_PREVIOUS: SUPPORT_PREVIOUS_TRACK,
     heos_const.CONTROL_PLAY_NEXT: SUPPORT_NEXT_TRACK,
 }
@@ -135,7 +135,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
 
     async def async_added_to_hass(self):
         """Device added to hass."""
-        self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER]
+        # self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER]   #removed as of v0.104 see Implement capability attributes (#30545)
         # Update state when attributes of the player change
         self._signals.append(
             self._player.heos.dispatcher.connect(
@@ -267,6 +267,10 @@ class HeosMediaPlayer(MediaPlayerDevice):
         current_support = [CONTROL_TO_SUPPORT[control] for control in controls]
         self._supported_features = reduce(ior, current_support, BASE_SUPPORTED_FEATURES)
         self._group_list = await self.get_groups()
+
+        if self._source_manager is None:        #added as of v0.104 see Implement capability attributes (#30545)
+            self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER] #added as of v0.104 see Implement capability attributes (#30545)
+
 
     async def async_will_remove_from_hass(self):
         """Disconnect the device when removed."""
@@ -427,14 +431,15 @@ class HeosMediaPlayer(MediaPlayerDevice):
 
     async def get_groups(self):
         """Rebuild the list of entities in speaker group"""
+        grouplist = []
         controller = self.hass.data[HEOS_DOMAIN][DATA_CONTROLLER_MANAGER].controller
         if controller.connection_state != heos_const.STATE_CONNECTED:
             _LOGGER.error("Unable to rebuild group because HEOS is not connected")
-            return None
+            return grouplist
 
         try:
             groups = await controller.get_groups(refresh=True)
-            grouplist = []
+            
 
             for group in groups.values():
                 if any(member.player_id == self.player_id for member in group.members) or group.leader.player_id == self.player_id:
@@ -449,9 +454,9 @@ class HeosMediaPlayer(MediaPlayerDevice):
  
             _LOGGER.info("HEOS Rebuilding group info, no groups found for this device: %s", self.name)
             self._group_name = ""
-            return grouplist        #return empty grouplist if not grouped.
+            return grouplist
 
         except HeosError as err:
             _LOGGER.error("HEOS Unable to get group info: %s", err)
             self._group_name = ""
-            return None
+            return grouplist
