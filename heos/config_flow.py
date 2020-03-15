@@ -28,11 +28,7 @@ class HeosFlowHandler(config_entries.ConfigFlow):
         """Handle a discovered Heos device."""
         # Store discovered host
         hostname = urlparse(discovery_info[ssdp.ATTR_SSDP_LOCATION]).hostname   #added v0.104 see commit Include all SSDP data in discovery info (#28197)
-        friendly_name = "{} ({})".format(
-            
-            #discovery_info[CONF_NAME], discovery_info[CONF_HOST]       #removed v0.104 see commit Include all SSDP data in discovery info (#28197)
-            discovery_info[ssdp.ATTR_UPNP_FRIENDLY_NAME], hostname      #added v0.104 see commit Include all SSDP data in discovery info (#28197)
-        )
+        friendly_name = f"{discovery_info[ssdp.ATTR_UPNP_FRIENDLY_NAME]} ({hostname})"
         self.hass.data.setdefault(DATA_DISCOVERED_HOSTS, {})
         #self.hass.data[DATA_DISCOVERED_HOSTS][friendly_name] = discovery_info[CONF_HOST]   #removed v0.104 see commit Include all SSDP data in discovery info (#28197)
         self.hass.data[DATA_DISCOVERED_HOSTS][friendly_name] = hostname                     #added v0.104 see commit Include all SSDP data in discovery info (#28197)
