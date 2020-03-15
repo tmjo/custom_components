@@ -66,9 +66,6 @@ _LOGGER = logging.getLogger(__name__)
 ATTR_HEOS_GROUP = "heos_group"              #group
 ATTR_HEOS_GROUPNAME = "groupName"           #groupname
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Platform uses config entry setup."""
-    pass
 
 
 async def async_setup_entry(
