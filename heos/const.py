@@ -4,7 +4,6 @@ ATTR_PASSWORD = "password"
 ATTR_USERNAME = "username"
 ATTR_GROUPMEMBERS = "groupmembers"
 ATTR_MASTER = "master"
-#ATTR_MASTER_UNJOIN = "entity_id"
 ATTR_ENTITY_ID = "entity_id"
 COMMAND_RETRY_ATTEMPTS = 2
 COMMAND_RETRY_DELAY = 1

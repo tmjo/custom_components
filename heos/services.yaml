@@ -3,10 +3,10 @@ sign_in:
   fields:
     username:
       description: The username or email of the HEOS account. [Required]
-      example: 'example@example.com'
+      example: "example@example.com"
     password:
       description: The password of the HEOS account. [Required]
-      example: 'password'
+      example: "password"
 
 sign_out:
   description: Sign the controller out of the HEOS account.
@@ -19,14 +19,14 @@ join:
   fields:
     master:
       description: The group master. [Required]
-      example: 'media_player.heos_player1'
+      example: "media_player.heos_player1"
     entity_id:
       description: The group member(s) to be included in group. [Optional]
-      example: 'media_player.heos_player2'
+      example: "media_player.heos_player2"
 
 unjoin:
   description: HEOS grouping - unjoin
   fields:
     entity_id:
       description: The group member(s) to be removed from group. [Optional]
-      example: 'media_player.heos_player2'
+      example: "media_player.heos_player2"

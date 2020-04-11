@@ -4,22 +4,19 @@ import logging
 
 from pyheos import CommandFailedError, Heos, HeosError, const
 import voluptuous as vol
-#from . import media_player
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import HomeAssistantType
 
-from homeassistant.components.media_player.const import (
-    DOMAIN,
-)
+from homeassistant.components.media_player.const import DOMAIN as MEDIA_PLAYER_DOMAIN
 
 from .const import (
     ATTR_PASSWORD,
     ATTR_USERNAME,
+    DOMAIN,
     ATTR_GROUPMEMBERS,
     ATTR_MASTER,
     ATTR_ENTITY_ID,
-    DOMAIN as HEOS_DOMAIN,
     SERVICE_GROUPINFO,
     SERVICE_JOIN,
     SERVICE_UNJOIN,    
@@ -45,49 +42,34 @@ HEOS_UNJOIN_SCHEMA = vol.Schema(
     {vol.Optional(ATTR_ENTITY_ID, default=None): cv.comp_entity_ids}
 )
 
-
-
-
 def register(hass: HomeAssistantType, controller: Heos):
     """Register HEOS services."""
     hass.services.async_register(
-        HEOS_DOMAIN,
+        DOMAIN,
         SERVICE_SIGN_IN,
         functools.partial(_sign_in_handler, controller),
         schema=HEOS_SIGN_IN_SCHEMA,
     )
     hass.services.async_register(
-        HEOS_DOMAIN,
+        DOMAIN,
         SERVICE_SIGN_OUT,
         functools.partial(_sign_out_handler, controller),
         schema=HEOS_SIGN_OUT_SCHEMA,
     )
     hass.services.async_register(
-        HEOS_DOMAIN,
+        DOMAIN,
         SERVICE_GROUPINFO,
         functools.partial(_groupinfo_handler, controller, hass),
         schema=HEOS_GROUPINFO_SCHEMA,
-    )
-    # hass.services.async_register(
-    #     HEOS_DOMAIN,
-    #     SERVICE_JOIN,
-    #     functools.partial(media_player.HeosMediaPlayer.join, controller, hass),
-    #     schema=HEOS_JOIN_SCHEMA,
-    # )
-    # hass.services.async_register(
-    #     HEOS_DOMAIN,
-    #     SERVICE_UNJOIN,
-    #     functools.partial(media_player.HeosMediaPlayer.unjoin, controller, hass),
-    #     schema=HEOS_UNJOIN_SCHEMA,
-
+    )   
     hass.services.async_register(
-        HEOS_DOMAIN,
+        DOMAIN,
         SERVICE_JOIN,
         functools.partial(_join_handler, controller, hass),
         schema=HEOS_JOIN_SCHEMA,
     )
     hass.services.async_register(
-        HEOS_DOMAIN,
+        DOMAIN,
         SERVICE_UNJOIN,
         functools.partial(_unjoin_handler, controller, hass),
         schema=HEOS_UNJOIN_SCHEMA,
@@ -96,11 +78,11 @@ def register(hass: HomeAssistantType, controller: Heos):
 
 def remove(hass: HomeAssistantType):
     """Unregister HEOS services."""
-    hass.services.async_remove(HEOS_DOMAIN, SERVICE_SIGN_IN)
-    hass.services.async_remove(HEOS_DOMAIN, SERVICE_SIGN_OUT)
-    hass.services.async_remove(HEOS_DOMAIN, SERVICE_GROUPINFO)
-    hass.services.async_remove(HEOS_DOMAIN, SERVICE_JOIN)    
-    hass.services.async_remove(HEOS_DOMAIN, SERVICE_UNJOIN)
+    hass.services.async_remove(DOMAIN, SERVICE_SIGN_IN)
+    hass.services.async_remove(DOMAIN, SERVICE_SIGN_OUT)
+    hass.services.async_remove(DOMAIN, SERVICE_GROUPINFO)
+    hass.services.async_remove(DOMAIN, SERVICE_JOIN)    
+    hass.services.async_remove(DOMAIN, SERVICE_UNJOIN)
 
 async def _sign_in_handler(controller, service):
     """Sign in to the HEOS account."""
@@ -132,31 +114,17 @@ async def _groupinfo_handler(controller, hass, service):
     if controller.connection_state != const.STATE_CONNECTED:
         _LOGGER.error("Unable to get info because HEOS is not connected")
         return
-    #entities = controller._hass.data[HEOS_DOMAIN].entities
     players = controller.get_players(refresh=True)
     groups = await controller.get_groups(refresh=True)
     groupstring = ""
     grouplist = []
 
-    #oneent = hass.helpers.entity_component.get_entity('media_player.heos5_office')
-    #_LOGGER.info("HEOS oneent: %s", oneent)
-
-    # test_entities = hass.data[HEOS_DOMAIN][DATA_CONTROLLER_MANAGER]._entity_registry
-
     try:
-    #     for test_ent in test_entities:
-    #         _LOGGER.info("HEOS Player: %s", test_ent)
-    #         _LOGGER.info("HEOS Player uniqueid: %s", test_ent.unique_id)
-
-        # for player in players:
-        #     _LOGGER.info("HEOS Player: %s", player)
-        #     #_LOGGER.info("HEOS Player uniqueid: %s", player.unique_id)
         for group in groups.values():
             groupstring += "name: " +group.name.lower()
             groupstring += "members: " +group.leader.name.lower()
             for alreadymember in group.members:
                 groupstring += "," +str(alreadymember.name.lower())
-            #groupstring = current_members.rstrip(',')            
             grouplist.append(groupstring)
         _LOGGER.info("HEOS Groups are: %s", grouplist)
         return grouplist
@@ -180,12 +148,12 @@ async def _join_handler(controller, hass, service):
     groupstring = ""
  
     #Get devices
-    master_device = [device for device in hass.data[DOMAIN].entities
+    master_device = [device for device in hass.data[MEDIA_PLAYER_DOMAIN].entities
         if device.entity_id == master
     ]
 
     #Get devices
-    join_devices = [device for device in hass.data[DOMAIN].entities
+    join_devices = [device for device in hass.data[MEDIA_PLAYER_DOMAIN].entities
         if any(device.entity_id in e for e in entity_ids)
     ]
 
@@ -226,7 +194,7 @@ async def _unjoin_handler(controller, hass, service):
     _LOGGER.debug("HEOS - trying to ungroup: " + str(entity_ids))
 
     #Get devices
-    join_devices = [device for device in hass.data[DOMAIN].entities
+    join_devices = [device for device in hass.data[MEDIA_PLAYER_DOMAIN].entities
         if any(device.entity_id in e for e in entity_ids)
     ]
 

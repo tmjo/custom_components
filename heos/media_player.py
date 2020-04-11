@@ -107,22 +107,13 @@ class HeosMediaPlayer(MediaPlayerDevice):
         self._group_list = []                   # group
         self._group_name = None
         
-
     async def _player_update(self, player_id, event):
         """Handle player attribute updated."""
         if self._player.player_id != player_id:
             return
         if event == heos_const.EVENT_PLAYER_NOW_PLAYING_PROGRESS:
-            self._media_position_updated_at = utcnow()
-        
+            self._media_position_updated_at = utcnow()      
         self._group_list = await self.get_groups()
-        # controller = self.hass.data[HEOS_DOMAIN][DATA_CONTROLLER_MANAGER].controller
-        # group_name = self.get_group_name(controller) #self._status.get("groupName", None)
-        # if group_name != self._group_name:
-        #     _LOGGER.debug("Group name change detected on device: %s", self._player)
-        #     self._group_name = group_name
-        #     # rebuild ordered list of entity_ids that are in the group, master is first
-        #     self._group_list = await self.rebuild_heos_group(controller)
         await self.async_update_ha_state(True)
 
     async def _heos_updated(self):
@@ -132,7 +123,6 @@ class HeosMediaPlayer(MediaPlayerDevice):
 
     async def async_added_to_hass(self):
         """Device added to hass."""
-        # self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER]   #removed as of v0.104 see Implement capability attributes (#30545)
         # Update state when attributes of the player change
         self._signals.append(
             self._player.heos.dispatcher.connect(
@@ -265,9 +255,8 @@ class HeosMediaPlayer(MediaPlayerDevice):
         self._supported_features = reduce(ior, current_support, BASE_SUPPORTED_FEATURES)
         self._group_list = await self.get_groups()
 
-        if self._source_manager is None:        #added as of v0.104 see Implement capability attributes (#30545)
-            self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER] #added as of v0.104 see Implement capability attributes (#30545)
-
+        if self._source_manager is None:
+            self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER]
 
     async def async_will_remove_from_hass(self):
         """Disconnect the device when removed."""
