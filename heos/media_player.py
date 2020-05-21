@@ -7,6 +7,7 @@ from typing import Sequence
 from pyheos import Heos, HeosError, const as heos_const
 
 from homeassistant.components.media_player import MediaPlayerDevice
+# from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_ENQUEUE,
     DOMAIN,
@@ -94,6 +95,7 @@ def log_command_error(command: str):
 
 
 class HeosMediaPlayer(MediaPlayerDevice):
+# class HeosMediaPlayer(MediaPlayerEntity):
     """The HEOS player."""
 
     def __init__(self, player):
