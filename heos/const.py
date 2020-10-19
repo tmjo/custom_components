@@ -17,5 +17,3 @@ SERVICE_GROUPINFO = "groupinfo"
 SERVICE_JOIN = "join"
 SERVICE_UNJOIN = "unjoin"
 SIGNAL_HEOS_UPDATED = "heos_updated"
-
-# Linking must be same as JSON tag

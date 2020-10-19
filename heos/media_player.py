@@ -6,8 +6,7 @@ from typing import Sequence
 
 from pyheos import Heos, HeosError, const as heos_const
 
-from homeassistant.components.media_player import MediaPlayerDevice
-# from homeassistant.components.media_player import MediaPlayerEntity
+from homeassistant.components.media_player import MediaPlayerEntity
 from homeassistant.components.media_player.const import (
     ATTR_MEDIA_ENQUEUE,
     DOMAIN,
@@ -56,7 +55,6 @@ CONTROL_TO_SUPPORT = {
     heos_const.CONTROL_PLAY: SUPPORT_PLAY,
     heos_const.CONTROL_PAUSE: SUPPORT_PAUSE,
     heos_const.CONTROL_STOP: SUPPORT_STOP,
-#    heos_const.CONTROL_STOP: SUPPORT_TURN_OFF,
     heos_const.CONTROL_PLAY_PREVIOUS: SUPPORT_PREVIOUS_TRACK,
     heos_const.CONTROL_PLAY_NEXT: SUPPORT_NEXT_TRACK,
 }
@@ -66,8 +64,6 @@ _LOGGER = logging.getLogger(__name__)
 
 ATTR_HEOS_GROUP = "heos_group"              #group
 ATTR_HEOS_GROUPNAME = "groupName"           #groupname
-
-
 
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
@@ -94,8 +90,7 @@ def log_command_error(command: str):
     return decorator
 
 
-class HeosMediaPlayer(MediaPlayerDevice):
-# class HeosMediaPlayer(MediaPlayerEntity):
+class HeosMediaPlayer(MediaPlayerEntity):
     """The HEOS player."""
 
     def __init__(self, player):
@@ -107,7 +102,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
         self._supported_features = BASE_SUPPORTED_FEATURES
         self._source_manager = None
         self._group_list = []                   # group
-        self._group_name = None
+        self._group_name = None                 # group
         
     async def _player_update(self, player_id, event):
         """Handle player attribute updated."""
@@ -115,12 +110,12 @@ class HeosMediaPlayer(MediaPlayerDevice):
             return
         if event == heos_const.EVENT_PLAYER_NOW_PLAYING_PROGRESS:
             self._media_position_updated_at = utcnow()      
-        self._group_list = await self.get_groups()
+        self._group_list = await self.get_groups()      # group
         await self.async_update_ha_state(True)
 
     async def _heos_updated(self):
         """Handle sources changed."""
-        self._group_list = await self.get_groups()
+        self._group_list = await self.get_groups()      # group
         await self.async_update_ha_state(True)
 
     async def async_added_to_hass(self):
@@ -181,7 +176,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
     @log_command_error("play media")
     async def async_play_media(self, media_type, media_id, **kwargs):
         """Play a piece of media."""
-        if media_type == MEDIA_TYPE_URL:
+        if media_type in (MEDIA_TYPE_URL, MEDIA_TYPE_MUSIC):
             await self._player.play_url(media_id)
             return
 
@@ -255,7 +250,7 @@ class HeosMediaPlayer(MediaPlayerDevice):
         controls = self._player.now_playing_media.supported_controls
         current_support = [CONTROL_TO_SUPPORT[control] for control in controls]
         self._supported_features = reduce(ior, current_support, BASE_SUPPORTED_FEATURES)
-        self._group_list = await self.get_groups()
+        self._group_list = await self.get_groups()              # group
 
         if self._source_manager is None:
             self._source_manager = self.hass.data[HEOS_DOMAIN][DATA_SOURCE_MANAGER]
@@ -291,8 +286,8 @@ class HeosMediaPlayer(MediaPlayerDevice):
             "media_source_id": self._player.now_playing_media.source_id,
             "media_station": self._player.now_playing_media.station,
             "media_type": self._player.now_playing_media.type,
-            ATTR_HEOS_GROUP: self._group_list,
-            ATTR_HEOS_GROUPNAME: self._group_name,
+            ATTR_HEOS_GROUP: self._group_list,              # group
+            ATTR_HEOS_GROUPNAME: self._group_name,          # group
         }
 
     @property
@@ -402,22 +397,22 @@ class HeosMediaPlayer(MediaPlayerDevice):
         return str(self._player.player_id)
 
     @property
-    def player_id(self) -> int:
-        """Return a player ID (int since PyHeos int)."""
-        return self._player.player_id
-
-    @property
     def volume_level(self) -> float:
         """Volume level of the media player (0..1)."""
         return self._player.volume / 100
 
-    async def entity_id_from_player_id(self, playerid):
+    @property
+    def player_id(self) -> int:     # group
+        """Return a player ID (int since PyHeos int)."""
+        return self._player.player_id
+
+    async def entity_id_from_player_id(self, playerid):     # group
         for device in self.hass.data[DOMAIN].entities:
             if playerid == device.unique_id:
                 return device.entity_id
         return None
 
-    async def get_groups(self):
+    async def get_groups(self):     # group
         """Rebuild the list of entities in speaker group"""
         grouplist = []
         controller = self.hass.data[HEOS_DOMAIN][DATA_CONTROLLER_MANAGER].controller

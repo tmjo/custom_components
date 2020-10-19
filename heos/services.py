@@ -14,12 +14,12 @@ from .const import (
     ATTR_PASSWORD,
     ATTR_USERNAME,
     DOMAIN,
-    ATTR_GROUPMEMBERS,
-    ATTR_MASTER,
-    ATTR_ENTITY_ID,
-    SERVICE_GROUPINFO,
-    SERVICE_JOIN,
-    SERVICE_UNJOIN,    
+    ATTR_GROUPMEMBERS,      # group
+    ATTR_MASTER,            # group
+    ATTR_ENTITY_ID,         # group
+    SERVICE_GROUPINFO,      # group
+    SERVICE_JOIN,           # group
+    SERVICE_UNJOIN,         # group
     SERVICE_SIGN_IN,
     SERVICE_SIGN_OUT,
 )
@@ -32,13 +32,13 @@ HEOS_SIGN_IN_SCHEMA = vol.Schema(
 
 HEOS_SIGN_OUT_SCHEMA = vol.Schema({})
 
-HEOS_GROUPINFO_SCHEMA = vol.Schema({})
+HEOS_GROUPINFO_SCHEMA = vol.Schema({})      # group
 
-HEOS_JOIN_SCHEMA = vol.Schema(
+HEOS_JOIN_SCHEMA = vol.Schema(              # group
     {vol.Required(ATTR_MASTER): cv.entity_id, vol.Optional(ATTR_ENTITY_ID): cv.comp_entity_ids}
 )
 
-HEOS_UNJOIN_SCHEMA = vol.Schema(
+HEOS_UNJOIN_SCHEMA = vol.Schema(            # group
     {vol.Optional(ATTR_ENTITY_ID, default=None): cv.comp_entity_ids}
 )
 
@@ -56,19 +56,19 @@ def register(hass: HomeAssistantType, controller: Heos):
         functools.partial(_sign_out_handler, controller),
         schema=HEOS_SIGN_OUT_SCHEMA,
     )
-    hass.services.async_register(
+    hass.services.async_register(       # group
         DOMAIN,
         SERVICE_GROUPINFO,
         functools.partial(_groupinfo_handler, controller, hass),
         schema=HEOS_GROUPINFO_SCHEMA,
     )   
-    hass.services.async_register(
+    hass.services.async_register(       # group
         DOMAIN,
         SERVICE_JOIN,
         functools.partial(_join_handler, controller, hass),
         schema=HEOS_JOIN_SCHEMA,
     )
-    hass.services.async_register(
+    hass.services.async_register(       # group
         DOMAIN,
         SERVICE_UNJOIN,
         functools.partial(_unjoin_handler, controller, hass),
@@ -80,9 +80,9 @@ def remove(hass: HomeAssistantType):
     """Unregister HEOS services."""
     hass.services.async_remove(DOMAIN, SERVICE_SIGN_IN)
     hass.services.async_remove(DOMAIN, SERVICE_SIGN_OUT)
-    hass.services.async_remove(DOMAIN, SERVICE_GROUPINFO)
-    hass.services.async_remove(DOMAIN, SERVICE_JOIN)    
-    hass.services.async_remove(DOMAIN, SERVICE_UNJOIN)
+    hass.services.async_remove(DOMAIN, SERVICE_GROUPINFO)       # group
+    hass.services.async_remove(DOMAIN, SERVICE_JOIN)            # group
+    hass.services.async_remove(DOMAIN, SERVICE_UNJOIN)          # group
 
 async def _sign_in_handler(controller, service):
     """Sign in to the HEOS account."""
@@ -109,7 +109,7 @@ async def _sign_out_handler(controller, service):
     except HeosError as err:
         _LOGGER.error("Unable to sign out: %s", err)
 
-async def _groupinfo_handler(controller, hass, service):
+async def _groupinfo_handler(controller, hass, service):        # group
     """Group Info HEOS players."""
     if controller.connection_state != const.STATE_CONNECTED:
         _LOGGER.error("Unable to get info because HEOS is not connected")
@@ -132,7 +132,7 @@ async def _groupinfo_handler(controller, hass, service):
     except HeosError as err:
         _LOGGER.error("Unable to get group info: %s", err)
 
-async def _join_handler(controller, hass, service):
+async def _join_handler(controller, hass, service):             # group
     """Join HEOS players."""
     if controller.connection_state != const.STATE_CONNECTED:
         _LOGGER.error("Unable to join because HEOS is not connected")
@@ -178,7 +178,7 @@ async def _join_handler(controller, hass, service):
     except HeosError as err:
         _LOGGER.error("Unable to join: %s", err)
 
-async def _unjoin_handler(controller, hass, service):
+async def _unjoin_handler(controller, hass, service):           # group
     """Unjoin HEOS players."""
     if controller.connection_state != const.STATE_CONNECTED:
         _LOGGER.error("Unable to unjoin because HEOS is not connected")
